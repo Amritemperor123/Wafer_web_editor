@@ -1,0 +1,38 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: editor-backend
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      WORKSPACE_ROOT: /app/workspace
+      PYTHON_BIN: python3
+    volumes:
+      - ./backend:/app/backend
+      - backend_node_modules:/app/backend/node_modules
+      - ./workspace:/app/workspace
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: editor-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_DEV_PROXY_TARGET: http://backend:4000
+      VITE_DEV_WS_PROXY_TARGET: ws://backend:4000
+    volumes:
+      - ./frontend:/app/frontend
+      - frontend_node_modules:/app/frontend/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+
+volumes:
+  backend_node_modules:
+  frontend_node_modules:
