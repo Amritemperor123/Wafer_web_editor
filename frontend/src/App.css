@@ -341,35 +341,47 @@ button:disabled {
 .editor-wrap {
   flex: 1;
   min-height: 180px;
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: block;
+  position: relative;
   overflow: hidden;
 }
 
-.line-numbers {
-  margin: 0;
-  background: #1b1b1c;
-  color: #858585;
-  border-right: 1px solid var(--border);
-  padding: 10px 8px;
-  font-family: Consolas, "Courier New", monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  user-select: none;
-  overflow: hidden;
-}
-
-.code-editor {
+.code-editor-ace {
   width: 100%;
-  border: 0;
-  outline: none;
-  resize: none;
-  background: #1e1e1e;
-  color: var(--text);
-  padding: 10px 12px;
-  font-family: Consolas, "Courier New", monospace;
+  height: 100%;
   font-size: 13px;
-  line-height: 1.5;
+}
+
+.signature-tooltip {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 30;
+  max-width: 500px;
+  background: rgba(28, 28, 30, 0.95);
+  border: 1px solid #3d3f44;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #e8e8e8;
+  font-size: 0.75rem;
+}
+
+.signature-tooltip strong {
+  color: #9cdcfe;
+  font-size: 0.8rem;
+}
+
+.signature-tooltip span {
+  color: #c8c8c8;
+}
+
+.signature-tooltip p {
+  margin: 0;
+  color: #c5c7cc;
+  white-space: pre-wrap;
 }
 
 .status-strip {
@@ -385,6 +397,55 @@ button:disabled {
   padding: 0 10px;
   white-space: nowrap;
   overflow: auto hidden;
+}
+
+.intel-strip {
+  min-height: 110px;
+  max-height: 180px;
+  border-top: 1px solid var(--border);
+  background: #1f1f21;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.outline-view,
+.references-view {
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 10px;
+}
+
+.references-view {
+  border-left: 1px solid var(--border);
+}
+
+.intel-title {
+  font-size: 0.72rem;
+  color: #a9acb2;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.outline-view ul,
+.references-view ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.outline-view button,
+.references-view button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #34363a;
+  background: #292a2d;
+  padding: 5px 8px;
+  font-size: 0.75rem;
 }
 
 .console {
@@ -511,5 +572,15 @@ button:disabled {
 
   .sidebar-resizer {
     display: none;
+  }
+
+  .intel-strip {
+    grid-template-columns: 1fr;
+    max-height: 220px;
+  }
+
+  .references-view {
+    border-left: 0;
+    border-top: 1px solid var(--border);
   }
 }

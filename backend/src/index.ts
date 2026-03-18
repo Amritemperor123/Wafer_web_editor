@@ -17,6 +17,7 @@ import {
   resolveSafePath,
   writeFile,
 } from "./fsService.js";
+import { runPythonIntel } from "./pythonIntelligence.js";
 import { runPython } from "./pythonService.js";
 import type { ChatClientMessage, ChatServerMessage } from "./types.js";
 
@@ -217,6 +218,33 @@ app.post("/api/python/run", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       error: "Failed to execute Python",
+      details: (error as Error).message,
+    });
+  }
+});
+
+app.post("/api/python/intel", async (req, res) => {
+  const { action } = req.body as { action?: string };
+  if (!action) {
+    res.status(400).json({ error: "Body must include 'action'" });
+    return;
+  }
+
+  try {
+    const result = await runPythonIntel(pythonBin, workspaceRoot, req.body);
+    if (
+      result &&
+      typeof result === "object" &&
+      "error" in result &&
+      typeof (result as { error?: unknown }).error === "string"
+    ) {
+      res.status(400).json(result);
+      return;
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Failed to execute Python intelligence",
       details: (error as Error).message,
     });
   }
