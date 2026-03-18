@@ -1,280 +1,196 @@
-# 🚀 Local-First AI Code Editor
+# Python IDE
 
-### Self-Hosted AI Coding Environment with Local LLM Orchestration
+Browser-based Python workspace with a file explorer, multi-tab editor, web terminal, Python execution, and lightweight code intelligence.
 
-A browser-based development workspace designed for speed and privacy, integrating:
+This project is currently a local development environment for working with Python files inside the `workspace/` directory. It is not yet a full AI code editor or RAG system. The chat socket exists in the backend, but it still returns placeholder streamed text.
 
-* Browser-based code editing
-* Local project indexing with vector embeddings
-* Retrieval-Augmented Generation (RAG)
-* Streaming token-based AI responses
-* Local LLM provider support (llama.cpp)
-* Simple, modular architecture
+## What It Can Do Today
 
-This project is a high-performance **local-first AI coding assistant**, prioritizing privacy and offline capabilities by keeping your code and AI processing on your own hardware.
+- Browse files and folders inside the configured workspace root
+- Open multiple files in tabs
+- Edit and save files from the browser
+- Create folders and create new Python files
+- Rename and delete files or folders
+- Download a file or folder from the workspace
+- Open an integrated terminal backed by the server machine
+- Run the current editor contents with Python
+- Show Python outline data for the active file
+- Provide Python completions, signature help, go to definition/declaration, find references, and project-wide rename
 
----
+## Current Scope And Limitations
 
-## 🎯 Vision
+- The editor is optimized for Python workflows. The runtime and code intelligence features are Python-specific.
+- File operations are limited to the workspace root for safety.
+- Python intelligence is implemented with a custom backend analysis script, not Pyright, Jedi, LSP, embeddings, or an LLM.
+- The WebSocket chat endpoint is only a stub right now. There is no real AI assistant, model integration, retrieval pipeline, or streaming from an LLM yet.
+- Docker support is currently aimed at local development with bind mounts and `npm run dev`, not a hardened production deployment.
 
-Modern AI coding assistants often rely entirely on cloud APIs, which can lead to latency and privacy concerns. 
+## Stack
 
-This project demonstrates:
+- Frontend: React 19, Vite, Ace Editor, xterm.js
+- Backend: Node.js, Express, TypeScript, WebSocket, node-pty
+- Runtime helpers: Python 3 for code execution and Python intelligence
+- Containers: separate frontend and backend Docker images plus `docker-compose.yml`
 
-* How to build a privacy-focused local coding workspace
-* Efficient local project indexing and retrieval
-* Real-time streaming AI interactions
-* A streamlined architecture for local-only workflows
+## Project Structure
 
----
-
-# 🧠 Core Features
-
----
-
-## 1️⃣ Browser-Based Development Workspace
-
-* Lightweight Code Editor
-* File tree explorer
-* Multi-file project structure
-* Real-time file updates
-* AI chat assistant panel
-* Context selector (current file / selected lines / entire project)
-
----
-
-## 2️⃣ Retrieval-Augmented Generation (RAG) Engine
-
-When a user asks a question:
-
-1. User query is embedded locally
-2. Similar project chunks are retrieved from the local vector store
-3. Context window is optimized for the selected model
-4. Prompt is assembled dynamically
-5. Token response is streamed back in real-time
-
-This ensures:
-
-* Privacy-first, context-aware responses
-* Project-specific intelligence without cloud data transfer
-* Low-latency interactions
-
----
-
-## 3️⃣ Project Indexing Service
-
-* File watcher triggers indexing on save
-* Intelligent chunking strategy for code semantics
-* Noise filtering (node_modules, dist, etc.)
-* Local embedding generation
-* Fast vector search capabilities
-
----
-
-## 4️⃣ Streaming LLM Response Layer
-
-* Backend streams tokens via WebSocket
-* Frontend renders AI responses in real time
-* Supports cancelling mid-generation
-* Optimized for local inference speed
-
----
-
-## 5️⃣ Local LLM Integration
-
-Specifically designed to work with:
-
-* **llama.cpp**: High-performance LLM inference in C/C++ with a built-in web server.
-* Modular adapter pattern for easy addition of other local backends.
-
----
-
-# 🏗 System Architecture
-
-```
-Frontend (React + Code Editor)
-         ↓ WebSocket + REST
-Backend API (Node.js)
-         ↓
-Local RAG Orchestrator
-    ↓            ↓
-Vector Store    llama.cpp (Local LLM)
-    ↓
-Indexing Worker
+```text
+frontend/    React UI
+backend/     API, terminal socket, file system service, Python execution, Python intelligence
+workspace/   Editable project files exposed in the browser
 ```
 
----
+## Local Setup
 
-# 🛠 Tech Stack
+### Prerequisites
 
----
+- Node.js 20+
+- npm
+- Python 3
 
-## Frontend
+### 1. Install dependencies
 
-* React (Vite)
-* Zustand (state management)
-* Tailwind CSS
-* WebSocket API
-* Axios
+Backend:
 
----
-
-## Backend
-
-* Node.js
-* Express
-* TypeScript
-* WebSocket (ws)
-* BullMQ (local job processing)
-* Redis (task queue)
-
----
-
-## AI & Data Layer
-
-* Local Vector Store
-* Local Embedding Models
-* llama.cpp for LLM inference
-
----
-
-# 📌 Functional Requirements
-
----
-
-## Project Management
-
-* Create and manage local projects
-* Edit files with real-time feedback
-* Trigger re-indexing of project files
-
----
-
-## File Indexing
-
-* Automatic background indexing of modified files
-* Smart chunking based on code structure
-* Persistent local embeddings
-
----
-
-## AI Query Handling
-
-* Context-aware chat with scope selection:
-  * Current file
-  * Selected code
-  * Entire project
-* Dynamic prompt assembly based on retrieved local context
-
----
-
-# 📈 Non-Functional Requirements
-
----
-
-## Performance
-
-* Local query latency < 1 second
-* Real-time streaming responsiveness
-* Minimal resource overhead for background indexing
-
----
-
-## Privacy & Security
-
-* **100% Local Data**: No code or prompts leave your machine.
-* No external API keys required.
-* Full control over your AI models and data.
-
----
-
-## Maintainability
-
-* Clean, modular TypeScript codebase.
-* Decoupled frontend and backend services.
-* Easy to extend with new local AI capabilities.
-
----
-
-# 📂 Folder Structure
-
-```
-/frontend
-  /src
-    /components
-    /hooks
-    /store
-    /pages
-
-/backend
-  /src
-    /controllers
-    /services
-    /llm
-    /rag
-    /workers
-```
-
----
-
-# 🚀 Execution Steps
-
----
-
-## 1️⃣ Setup Environment
-
-```bash
-git clone <repo>
-cd local-ai-editor
-```
-
----
-
-## 2️⃣ Prerequisites
-
-* **llama.cpp**: Binary and GGUF model file.
-* **Redis**: For background job tracking
-
----
-
-## 3️⃣ Install & Run
-
-**Backend:**
 ```bash
 cd backend
 npm install
-npm run dev
 ```
 
-**Frontend:**
+Frontend:
+
 ```bash
 cd frontend
 npm install
+```
+
+### 2. Start the backend
+
+```bash
+cd backend
 npm run dev
 ```
 
----
+The backend starts on `http://localhost:4000`.
 
-## 4️⃣ Run AI Server
+Useful environment variables:
 
-Download a GGUF model and start the llama.cpp server:
+- `PORT`: backend port, default `4000`
+- `WORKSPACE_ROOT`: workspace directory path, default `../workspace`
+- `PYTHON_BIN`: Python executable name or path, default `python`
+
+### 3. Start the frontend
 
 ```bash
-./llama-server -m models/mistral-7b-v0.1.Q4_K_M.gguf --port 8080
+cd frontend
+npm run dev
 ```
 
----
+The frontend starts on `http://localhost:5173` and proxies `/api` and `/ws` traffic to the backend during development.
 
-# 🔮 Future Improvements
+### 4. Open the app
 
-* Cloud integration (optional sync/remote inference)
-* Multi-user collaboration (for team environments)
-* Advanced diff-based indexing
-* WebGPU-based browser inference (zero-dependency AI)
-* Integrated terminal support
+Open `http://localhost:5173` in the browser.
 
----
+## Docker Setup
 
-# 📝 Resume Summary
+The repository already includes:
 
-> Developed a privacy-first, local AI code editor featuring a RAG-based search engine, real-time WebSocket streaming, and background file indexing. Built with a React/Node.js stack and optimized for local LLM inference via llama.cpp, ensuring code stays secure and accessible offline.
+- `backend/Dockerfile`
+- `frontend/Dockerfile`
+- `docker-compose.yml`
+
+### Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Services:
+
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:4000`
+
+Notes:
+
+- The compose setup mounts local source code into the containers for development.
+- The `workspace/` directory is mounted into the backend container so changes persist on the host.
+- The backend container installs Python 3 so the run/intelligence features work inside Docker.
+
+## Building Images For Docker Hub
+
+If you want to publish images, use explicit tags for frontend and backend. Replace `yourdockerhubname` with your Docker Hub username or org.
+
+Build:
+
+```bash
+docker build -t yourdockerhubname/python-ide-backend:latest ./backend
+docker build -t yourdockerhubname/python-ide-frontend:latest ./frontend
+```
+
+Login:
+
+```bash
+docker login
+```
+
+Push:
+
+```bash
+docker push yourdockerhubname/python-ide-backend:latest
+docker push yourdockerhubname/python-ide-frontend:latest
+```
+
+Recommended tagging:
+
+- `latest` for the newest stable image you want people to pull by default
+- version tags such as `0.1.0`
+- optional commit-based tags for traceability
+
+Example:
+
+```bash
+docker tag yourdockerhubname/python-ide-backend:latest yourdockerhubname/python-ide-backend:0.1.0
+docker tag yourdockerhubname/python-ide-frontend:latest yourdockerhubname/python-ide-frontend:0.1.0
+docker push yourdockerhubname/python-ide-backend:0.1.0
+docker push yourdockerhubname/python-ide-frontend:0.1.0
+```
+
+## API Summary
+
+REST endpoints:
+
+- `GET /api/health`
+- `GET /api/files`
+- `GET /api/files/content?path=...`
+- `PUT /api/files/content`
+- `POST /api/files/folder`
+- `PATCH /api/files/rename`
+- `DELETE /api/files?path=...`
+- `GET /api/files/download?path=...`
+- `POST /api/python/run`
+- `POST /api/python/intel`
+
+WebSocket endpoints:
+
+- `/ws/terminal` for the integrated terminal
+- `/ws/chat` for the placeholder streamed chat endpoint
+
+## Keyboard Shortcuts
+
+- `Ctrl/Cmd + S`: save current file
+- `Ctrl/Cmd + Enter`: run current file contents with Python
+- `F12`: go to definition
+- `Alt + F12`: go to declaration
+- `Shift + F12`: find references
+- `Ctrl/Cmd + Shift + R`: rename symbol project-wide
+
+## Roadmap
+
+Planned work that is not implemented yet:
+
+- Real LLM integration
+- Project-aware AI chat
+- Retrieval over workspace files
+- Better production containerization and deployment story
+- Broader language support beyond Python
