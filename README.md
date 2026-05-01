@@ -1,8 +1,8 @@
 # Python IDE
 
-Browser-based Python workspace with a file explorer, multi-tab editor, web terminal, Python execution, and lightweight code intelligence.
+Browser-based Python workspace with a file explorer, multi-tab editor, web terminal, Python execution, lightweight code intelligence, and a local LM Studio chat sidebar.
 
-This project is currently a local development environment for working with Python files inside the `workspace/` directory. It is not yet a full AI code editor or RAG system. The chat socket exists in the backend, but it still returns placeholder streamed text.
+This project is currently a local development environment for working with Python files inside the `workspace/` directory. It includes a streamed LM Studio chat bridge, but it is not yet a full project-aware AI editor or RAG system.
 
 ## What It Can Do Today
 
@@ -17,13 +17,15 @@ This project is currently a local development environment for working with Pytho
 - Show Python outline data for the active file
 - Provide Python completions, signature help, go to definition/declaration, find references, and project-wide rename
 - Chat with a local LM Studio model from the right sidebar
+- Collapse the left explorer, right chat sidebar, and intelligence panel to keep the editor focused
+- Use a fixed-height app layout where panels fit inside the browser window and scroll internally when needed
 
 ## Current Scope And Limitations
 
 - The editor is optimized for Python workflows. The runtime and code intelligence features are Python-specific.
 - File operations are limited to the workspace root for safety.
 - Python intelligence is implemented with a custom backend analysis script, not Pyright, Jedi, LSP, embeddings, or an LLM.
-- The WebSocket chat endpoint is only a stub right now. There is no real AI assistant, model integration, retrieval pipeline, or streaming from an LLM yet.
+- The chat endpoint streams from LM Studio's OpenAI-compatible API, but it does not yet automatically inject workspace context or retrieval results.
 - Docker support is currently aimed at local development with bind mounts and `npm run dev`, not a hardened production deployment.
 
 ## Stack
@@ -96,6 +98,13 @@ The frontend starts on `http://localhost:5173` and proxies `/api` and `/ws` traf
 ### 4. Open the app
 
 Open `http://localhost:5173` in the browser.
+
+## UI Notes
+
+- The left explorer and right LM Studio chat sidebar are collapsible with smooth width transitions.
+- The intelligence panel is collapsed by default; expand it when you need outline or reference results.
+- The app frame is fixed to the browser viewport. Long file lists, chat history, terminal output, and intelligence results scroll inside their own panels.
+- In chat, press `Enter` to send and `Shift + Enter` for a newline. A typing indicator appears while the assistant response is pending.
 
 ## Docker Setup
 
@@ -185,6 +194,8 @@ WebSocket endpoints:
 
 - `Ctrl/Cmd + S`: save current file
 - `Ctrl/Cmd + Enter`: run current file contents with Python
+- `Enter` in chat: send message
+- `Shift + Enter` in chat: insert newline
 - `F12`: go to definition
 - `Alt + F12`: go to declaration
 - `Shift + F12`: find references
