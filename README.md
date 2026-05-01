@@ -16,6 +16,7 @@ This project is currently a local development environment for working with Pytho
 - Run the current editor contents with Python
 - Show Python outline data for the active file
 - Provide Python completions, signature help, go to definition/declaration, find references, and project-wide rename
+- Chat with a local LM Studio model from the right sidebar
 
 ## Current Scope And Limitations
 
@@ -78,6 +79,10 @@ Useful environment variables:
 - `PORT`: backend port, default `4000`
 - `WORKSPACE_ROOT`: workspace directory path, default `../workspace`
 - `PYTHON_BIN`: Python executable name or path, default `python`
+- `LM_STUDIO_BASE_URL`: OpenAI-compatible LM Studio API base URL, default `http://localhost:1234/v1`
+- `LM_STUDIO_MODEL`: model name sent to LM Studio, default `local-model`
+
+For Docker Compose, the backend defaults `LM_STUDIO_BASE_URL` to `http://host.docker.internal:1234/v1` so it can reach LM Studio running on the host machine. Start the LM Studio local server first, load a model, and set `LM_STUDIO_MODEL` if your server requires the exact loaded model id.
 
 ### 3. Start the frontend
 
@@ -174,7 +179,7 @@ REST endpoints:
 WebSocket endpoints:
 
 - `/ws/terminal` for the integrated terminal
-- `/ws/chat` for the placeholder streamed chat endpoint
+- `/ws/chat` for streamed LM Studio chat responses
 
 ## Keyboard Shortcuts
 
@@ -189,7 +194,6 @@ WebSocket endpoints:
 
 Planned work that is not implemented yet:
 
-- Real LLM integration
 - Project-aware AI chat
 - Retrieval over workspace files
 - Better production containerization and deployment story

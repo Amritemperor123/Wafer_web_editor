@@ -10,6 +10,8 @@ services:
       PORT: 4000
       WORKSPACE_ROOT: /app/workspace
       PYTHON_BIN: python3
+      LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+      LM_STUDIO_MODEL: ${LM_STUDIO_MODEL:-local-model}
     volumes:
       - ./backend:/app/backend
       - backend_node_modules:/app/backend/node_modules

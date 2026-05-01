@@ -9,6 +9,7 @@ import EditorStatusBar from "./components/editor/EditorStatusBar";
 import IntelligencePanel from "./components/intel/IntelligencePanel";
 import TerminalPanel from "./components/terminal/TerminalPanel";
 import ContextMenu from "./components/menus/ContextMenu";
+import ChatSidebar from "./components/chat/ChatSidebar";
 import { useTerminalSession } from "./hooks/useTerminalSession";
 import { useWorkspaceManager } from "./hooks/useWorkspaceManager";
 
@@ -18,6 +19,8 @@ function App() {
   const terminalRef = useRef(null);
 
   const [terminalSessionId, setTerminalSessionId] = useState(0);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [isIntelligenceCollapsed, setIsIntelligenceCollapsed] = useState(true);
 
   const workspace = useWorkspaceManager({ editorRef, terminalRef });
 
@@ -89,7 +92,13 @@ function App() {
       <AppHeader status={workspace.status} dirtyCount={workspace.dirtyCount} />
 
       <div
-        className={workspace.isSidebarCollapsed ? "layout sidebar-collapsed" : "layout"}
+        className={[
+          "layout",
+          workspace.isSidebarCollapsed ? "sidebar-collapsed" : "",
+          isChatCollapsed ? "chat-collapsed" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         style={{ "--sidebar-width": `${workspace.sidebarWidth}px` }}
       >
         <ExplorerSidebar
@@ -186,6 +195,8 @@ function App() {
             onSelectLocation={(location) =>
               workspace.goToLocation(location).catch((error) => workspace.setStatus(error.message))
             }
+            isCollapsed={isIntelligenceCollapsed}
+            onToggle={() => setIsIntelligenceCollapsed((previous) => !previous)}
             outlineItems={workspace.outlineItems}
             references={workspace.references}
           />
@@ -196,6 +207,12 @@ function App() {
             terminalHostRef={terminalHostRef}
           />
         </main>
+
+        <ChatSidebar
+          activePath={workspace.activePath}
+          isCollapsed={isChatCollapsed}
+          onToggle={() => setIsChatCollapsed((previous) => !previous)}
+        />
       </div>
 
       <ContextMenu contextMenu={workspace.contextMenu} onAction={workspace.runContextAction} />

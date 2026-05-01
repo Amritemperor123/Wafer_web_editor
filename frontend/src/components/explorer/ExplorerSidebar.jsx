@@ -1,5 +1,14 @@
 import { fileNameFromPath } from "../../utils/path";
 
+const getEntryIcon = (entry) => {
+  if (entry.type === "directory") {
+    return "dir";
+  }
+
+  const extension = fileNameFromPath(entry.path).split(".").pop()?.toLowerCase();
+  return extension === "py" ? "py" : "file";
+};
+
 function ExplorerSidebar({
   activePath,
   clipboardEntry,
@@ -18,7 +27,10 @@ function ExplorerSidebar({
   return (
     <aside className="panel files-panel">
       <div className="panel-title-row">
-        <h2>Explorer</h2>
+        <div>
+          <h2>Explorer</h2>
+          <p className="panel-subtitle">{files.length} workspace items</p>
+        </div>
         <div className="sidebar-header-actions">
           <button type="button" className="icon-button" title="Refresh" onClick={onRefresh}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -45,7 +57,7 @@ function ExplorerSidebar({
 
       <input
         className="input"
-        placeholder="Filter files and folders..."
+        placeholder="Search workspace"
         value={fileFilter}
         onChange={(event) => onFileFilterChange(event.target.value)}
       />
@@ -78,13 +90,14 @@ function ExplorerSidebar({
                     }
                   }}
                 >
-                  <span className="entry-icon">{entry.type === "directory" ? "D" : "F"}</span>
+                  <span className={`entry-icon ${entry.type}`}>{getEntryIcon(entry)}</span>
                   <span>{name}</span>
                 </button>
               </div>
             </li>
           );
         })}
+        {!files.length ? <li className="empty-state">No files found</li> : null}
       </ul>
     </aside>
   );

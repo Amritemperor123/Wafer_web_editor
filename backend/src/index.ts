@@ -19,11 +19,16 @@ import {
 } from "./fsService.js";
 import { runPythonIntel } from "./pythonIntelligence.js";
 import { runPython } from "./pythonService.js";
-import type { ChatClientMessage, ChatServerMessage } from "./types.js";
+import type { ChatClientMessage, ChatMessage, ChatServerMessage } from "./types.js";
 
 const port = Number(process.env.PORT ?? 4000);
 const pythonBin = process.env.PYTHON_BIN ?? "python";
 const workspaceRoot = path.resolve(process.cwd(), process.env.WORKSPACE_ROOT ?? "../workspace");
+const lmStudioBaseUrl = (process.env.LM_STUDIO_BASE_URL ?? "http://localhost:1234/v1").replace(
+  /\/+$/,
+  "",
+);
+const lmStudioModel = process.env.LM_STUDIO_MODEL ?? "local-model";
 const require = createRequire(import.meta.url);
 
 type PtyProcess = {
@@ -48,11 +53,104 @@ type NodePtyModule = {
   ) => PtyProcess;
 };
 
+type LmStudioChatChunk = {
+  choices?: Array<{
+    delta?: {
+      content?: string;
+    };
+    message?: {
+      content?: string;
+    };
+  }>;
+};
+
 const tryLoadNodePty = (): NodePtyModule | null => {
   try {
     return require("node-pty") as NodePtyModule;
   } catch {
     return null;
+  }
+};
+
+const sanitizeChatMessages = (messages: ChatMessage[] | undefined, prompt: string): ChatMessage[] => {
+  const cleanMessages =
+    messages
+      ?.filter(
+        (message): message is ChatMessage =>
+          Boolean(message) &&
+          ["system", "user", "assistant"].includes(message.role) &&
+          typeof message.content === "string" &&
+          message.content.trim().length > 0,
+      )
+      .slice(-20) ?? [];
+
+  if (!cleanMessages.length || cleanMessages[cleanMessages.length - 1]?.role !== "user") {
+    cleanMessages.push({ role: "user", content: prompt });
+  }
+
+  return cleanMessages;
+};
+
+const streamLmStudioChat = async (
+  message: ChatClientMessage,
+  sendJson: (payload: ChatServerMessage) => void,
+  signal: AbortSignal,
+) => {
+  const response = await fetch(`${lmStudioBaseUrl}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: lmStudioModel,
+      messages: sanitizeChatMessages(message.messages, message.prompt),
+      temperature: 0.7,
+      stream: true,
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const details = await response.text().catch(() => "");
+    throw new Error(
+      `LM Studio request failed (${response.status})${details ? `: ${details.slice(0, 240)}` : ""}`,
+    );
+  }
+
+  if (!response.body) {
+    throw new Error("LM Studio did not return a readable stream");
+  }
+
+  const decoder = new TextDecoder();
+  const reader = response.body.getReader();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split(/\r?\n/);
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) {
+        continue;
+      }
+
+      const data = trimmed.slice(5).trim();
+      if (!data || data === "[DONE]") {
+        continue;
+      }
+
+      const chunk = JSON.parse(data) as LmStudioChatChunk;
+      const token =
+        chunk.choices?.[0]?.delta?.content ?? chunk.choices?.[0]?.message?.content ?? "";
+      if (token) {
+        sendJson({ type: "token", token });
+      }
+    }
   }
 };
 
@@ -256,7 +354,20 @@ const chatWss = new WebSocketServer({ noServer: true });
 const terminalWss = new WebSocketServer({ noServer: true });
 
 chatWss.on("connection", (socket) => {
-  socket.on("message", (raw) => {
+  let activeController: AbortController | null = null;
+
+  const sendJson = (payload: ChatServerMessage) => {
+    if (socket.readyState === socket.OPEN) {
+      socket.send(JSON.stringify(payload));
+    }
+  };
+
+  sendJson({
+    type: "status",
+    message: `LM Studio endpoint: ${lmStudioBaseUrl} (${lmStudioModel})`,
+  });
+
+  socket.on("message", async (raw) => {
     let message: ChatClientMessage;
     try {
       message = JSON.parse(String(raw)) as ChatClientMessage;
@@ -265,7 +376,7 @@ chatWss.on("connection", (socket) => {
         type: "error",
         message: "Invalid JSON message",
       };
-      socket.send(JSON.stringify(response));
+      sendJson(response);
       return;
     }
 
@@ -274,35 +385,26 @@ chatWss.on("connection", (socket) => {
         type: "error",
         message: "Expected message { type: 'prompt', prompt: string }",
       };
-      socket.send(JSON.stringify(response));
+      sendJson(response);
       return;
     }
 
-    const generated = [
-      "Local AI adapter is wired.",
-      "This is a placeholder stream.",
-      "Next step: replace with llama.cpp prompt + RAG context.",
-      `Prompt length: ${message.prompt.length} chars.`,
-    ].join(" ");
+    activeController?.abort();
+    activeController = new AbortController();
+    sendJson({ type: "status", message: "Connected to LM Studio. Streaming response..." });
 
-    const tokens = generated.split(" ");
-    let index = 0;
-
-    const interval = setInterval(() => {
-      if (index >= tokens.length) {
-        const done: ChatServerMessage = { type: "done" };
-        socket.send(JSON.stringify(done));
-        clearInterval(interval);
-        return;
+    try {
+      await streamLmStudioChat(message, sendJson, activeController.signal);
+      sendJson({ type: "done" });
+    } catch (error) {
+      if (!activeController.signal.aborted) {
+        sendJson({ type: "error", message: (error as Error).message });
       }
+    }
+  });
 
-      const token = tokens[index];
-      index += 1;
-      const response: ChatServerMessage = { type: "token", token: `${token} ` };
-      socket.send(JSON.stringify(response));
-    }, 60);
-
-    socket.on("close", () => clearInterval(interval));
+  socket.on("close", () => {
+    activeController?.abort();
   });
 });
 

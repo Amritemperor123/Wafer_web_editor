@@ -2,12 +2,15 @@ function TerminalPanel({ onClear, onReconnect, terminalHostRef }) {
   return (
     <section className="console terminal-panel">
       <div className="panel-title-row">
-        <h2>Terminal</h2>
+        <div>
+          <h2>Terminal</h2>
+          <p className="panel-subtitle">Interactive shell</p>
+        </div>
         <div className="terminal-actions">
-          <button type="button" onClick={onClear}>
+          <button type="button" className="quiet-action" onClick={onClear}>
             Clear
           </button>
-          <button type="button" onClick={onReconnect}>
+          <button type="button" className="quiet-action" onClick={onReconnect}>
             Reconnect
           </button>
         </div>

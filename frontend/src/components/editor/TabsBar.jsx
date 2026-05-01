@@ -1,38 +1,44 @@
 function TabsBar({ activePath, buffers, openTabs, onCloseTab, onSelectTab }) {
   return (
-    <div className="tabs-row">
-      {openTabs.map((tabPath) => {
-        const dirty = buffers[tabPath]?.dirty;
+    <div className={openTabs.length ? "tabs-row" : "tabs-row empty-tabs"}>
+      {openTabs.length ? (
+        openTabs.map((tabPath) => {
+          const dirty = buffers[tabPath]?.dirty;
 
-        return (
-          <button
-            key={tabPath}
-            type="button"
-            className={tabPath === activePath ? "tab active" : "tab"}
-            onClick={() => onSelectTab(tabPath)}
-          >
-            <span>{tabPath}</span>
-            {dirty ? <span className="dirty-dot">*</span> : null}
-            <span
-              role="button"
-              tabIndex={0}
-              className="tab-close"
-              onClick={(event) => {
-                event.stopPropagation();
-                onCloseTab(tabPath);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onCloseTab(tabPath);
-                }
-              }}
+          return (
+            <button
+              key={tabPath}
+              type="button"
+              className={tabPath === activePath ? "tab active" : "tab"}
+              onClick={() => onSelectTab(tabPath)}
+              title={tabPath}
             >
-              x
-            </span>
-          </button>
-        );
-      })}
+              <span>{tabPath}</span>
+              {dirty ? <span className="dirty-dot" title="Unsaved changes" /> : null}
+              <span
+                role="button"
+                tabIndex={0}
+                className="tab-close"
+                aria-label={`Close ${tabPath}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onCloseTab(tabPath);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onCloseTab(tabPath);
+                  }
+                }}
+              >
+                x
+              </span>
+            </button>
+          );
+        })
+      ) : (
+        <span className="empty-tabs-message">Open a file from the explorer to start editing</span>
+      )}
     </div>
   );
 }

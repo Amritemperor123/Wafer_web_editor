@@ -550,7 +550,7 @@ export function useWorkspaceManager({ editorRef, terminalRef }) {
       const blob = await response.blob();
       const fallbackName = `${fileNameFromPath(entryPath)}${entryType === "directory" ? ".tar.gz" : ""}`;
       const contentDisposition = response.headers.get("Content-Disposition") ?? "";
-      const match = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+      const match = contentDisposition.match(/filename="?([^";]+)"?/i);
       const filename = match?.[1] ?? fallbackName;
 
       const objectUrl = URL.createObjectURL(blob);
@@ -757,14 +757,19 @@ export function useWorkspaceManager({ editorRef, terminalRef }) {
   }, [activePath, code, fetchOutline]);
 
   useEffect(() => {
-    setReferences([]);
-    setSignatureInfo(null);
+    const timer = window.setTimeout(() => {
+      setReferences([]);
+      setSignatureInfo(null);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [activePath]);
 
   return {
     activeBuffer,
     activePath,
     buffers,
+    closeTab,
     clipboardEntry,
     code,
     contextMenu,
